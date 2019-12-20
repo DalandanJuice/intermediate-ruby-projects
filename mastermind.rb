@@ -1,65 +1,55 @@
 class CodeMaker
   attr_accessor :pattern, :code_breaker, :feedback
-  def initialize(code_breaker)
+  def initialize()
     @pattern = []
     @feedback = []
-    @code_breaker = code_breaker
   end
 
-  def give_feedback
-    code_pegs = self.code_breaker.code_pegs
+  def give_feedback(code_breaker)
+    code_pegs = code_breaker.code_pegs
     code_pegs.each_with_index do |_code, index|
-      if is_correct?(index)
-          self.feedback.push('B')
-      elsif is_wrong_position?(index)
-          self.feedback.push('W')
-
+      if  pattern.include?(code_pegs[index]) == false
+  
+      elsif is_correct?(index,code_breaker)
+        @feedback.push('B')
+      elsif is_wrong_position?(index,code_breaker)
+        @feedback.push('W')
       end
     end
-   self.feedback = feedback.shuffle
+    @feedback = feedback.shuffle
   end
+  
   def make_pattern
     4.times do
-      random_peg = get_random_pegs()
-      self.pattern.push(random_peg)
+      random_peg = get_random_pegs
+      @pattern.push(random_peg)
     end
-    self.pattern
+    @pattern
   end
   def get_random_pegs
-    colors = ['blue', 'green', 'yellow', 'violet','brown']
+    colors = ['blue', 'green', 'yellow', 'violet', 'brown']
     random_index = rand(5)
-    return colors[random_index]
+    colors[random_index]
   end
   private
 
-  def is_correct?(index) #Correct in both color and position
-    if code_breaker.code_pegs[index].downcase == self.pattern[index]
+  def is_correct?(index,code_breaker) #Correct in both color and position
+    if code_breaker.code_pegs[index].downcase == @pattern[index]
       return true
     else
       return false
     end
   end
 
-  def is_wrong_position?(index) #Correct in color but wrong in position
-    pattern = self.pattern
-    code_pegs = self.code_breaker.code_pegs
-    if is_correct?(index) == false
-      if pattern[index] == code_pegs[index]
+  def is_wrong_position?(index, code_breaker) #Correct in color but wrong in position
+    code_pegs = code_breaker.code_pegs
+    if is_correct?(index,code_breaker) == false
+      if code_pegs.include?(pattern[index])
         return true
       end
     end
     return false
   end
-
-  def is_present?(index)
-    code_pegs = self.code_breaker.code_pegs
-    if pattern.include?(code_pegs[index].downcase)
-      return true
-    else
-      return false
-    end
-  end
-
 end
 
 class CodeBreaker
@@ -69,11 +59,25 @@ class CodeBreaker
   end
 
   def guess_code
-    puts 'Give 4 color sand separate it with space.(Example: blue green yellow brown)'
+    puts 'Give 4 color sand separate it with space.(Choices: blue, green, yellow, brown and violet)'
     codes = gets.chomp.split(' ')
     codes.each do |color| 
       @code_pegs.push(color)
     end
+  end
+end
+
+class Computer < CodeBreaker
+
+  attr_accessor :code_maker
+  def initialize
+    super()
+  end
+
+  def give_random_pegs
+    colors = ['yellow', 'brown', 'violet', 'green', 'blue']
+    index = Random.rand(4)
+    @code_pegs.push(colors[index])
   end
 end
 class DecodingBoard
@@ -94,7 +98,7 @@ class DecodingBoard
   def draw_code
     code_pegs = self.code_breaker.code_pegs
     code_pegs.each do |code|
-      print("| #{code} |")
+      print("| #{code} ")
     end
   end
 
@@ -106,22 +110,14 @@ class DecodingBoard
     print ')'
   end
 end
-class Computer < code_breaker
-  attr_accesso :code_maker
-  def initialize(code_maker)
-   @code_maker = code_maker
-  end
-  def give_random_pegs
-    colors = ['yellow','brown','violet','green','blue']
-    
-  end
-end
+
+
 class MasterMind
   attr_accessor :code_breaker, :code_maker, :decoding_board
   def initialize
     @code_breaker = CodeBreaker.new
-    @code_maker = CodeMaker.new(code_breaker)
-    @computer = Computer.new(code_maker)
+    @code_maker = CodeMaker.new()
+    @computer = Computer.new()
     @decoding_board = DecodingBoard.new(code_maker, code_breaker)
     self.code_maker.make_pattern
   end
@@ -145,22 +141,24 @@ class MasterMind
   private
   def play_as_code_maker
     command = ''
-    puts ' Make a pattern that consists of 4 pegsand separate it with space'
+    puts ' Make a pattern that consists of 4 pegs and separate it with space'
     puts 'Choices: blue green yellow brown violet'
     pattern = gets.chomp.split(' ')
     @code_maker.pattern = pattern
 
     12.times do |attempt|
+      puts "attempt: #{attempt}"
       @decoding_board.draw
       command = code_breaker.guess_code
     end
   end
   def play_as_code_breaker
     command= ""
-    12.times do |attempt| 
+    12.times do |attempt|
+      puts  @code_maker.pattern
       @decoding_board.draw
       command = code_breaker.guess_code
-      code_maker.give_feedback
+      @code_maker.give_feedback(@code_breaker)
       if is_correct?
         puts is_correct?
         break
@@ -169,18 +167,23 @@ class MasterMind
         break
       elsif
         self.code_breaker.code_pegs.length != 4
-        self.code_maker.feedback.clear
-        self.code_breaker.code_pegs.clear
+        clear_all
         puts 'You can only input 4 pegs'
         redo
       end
       puts "Attempt: #{attempt + 1}/12"
       decoding_board.draw
-      @code_maker.feedback.clear
-      @code_breaker.code_pegs.clear
+      clear_all
+   
     end
   end
+
   private
+
+  def clear_all
+    @code_maker.feedback.clear
+    @code_breaker.code_pegs.clear
+  end
   def is_correct?
     correct_count = 0
     self.code_maker.feedback.each do |x|
