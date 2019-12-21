@@ -1,85 +1,89 @@
-class CodeMaker
-  attr_accessor :pattern, :code_breaker, :feedback
-  def initialize()
-    @pattern = []
-    @feedback = []
-  end
+module CodeMaker
 
-  def give_feedback(code_breaker)
-    code_pegs = code_breaker.code_pegs
+  def give_feedback(pattern,code_breaker)
+    feedback = []
+    code_pegs = code_brekaer.code_pegs
     code_pegs.each_with_index do |_code, index|
-      if  pattern.include?(code_pegs[index]) == false
-  
-      elsif is_correct?(index,code_breaker)
-        @feedback.push('B')
-      elsif is_wrong_position?(index,code_breaker)
-        @feedback.push('W')
+      if pattern.include?(code_pegs[index]) == false
+      elsif is_correct?(pattern, index, code_breaker)
+        feedback.push('B')
+      elsif is_wrong_position?(pattern, index, code_breaker)
+        feedback.push('W')
       end
     end
-    @feedback = feedback.shuffle
+
   end
-  
+
   def make_pattern
-    4.times do
+    pattern = []
+    5.times do
       random_peg = get_random_pegs
-      @pattern.push(random_peg)
+      pattern.push[random_peg]
     end
-    @pattern
+    pattern
   end
+
   def get_random_pegs
-    colors = ['blue', 'green', 'yellow', 'violet', 'brown']
-    random_index = rand(5)
-    colors[random_index]
+    colors = ['yellow','brown','violet','green','blue']
+    index = Random.rand(4)
+    return(colors[index])
   end
   private
 
-  def is_correct?(index,code_breaker) #Correct in both color and position
-    if code_breaker.code_pegs[index].downcase == @pattern[index]
+  def is_correct?(pattern, index, code_breaker) #Correct in both color and position
+    code_pegs = code_breaker.code_pegs
+    if code_pegs[index].downcase == pattern[index]
       return true
     else
       return false
     end
   end
 
-  def is_wrong_position?(index, code_breaker) #Correct in color but wrong in position
+  def is_wrong_position?(pattern, index, code_breaker)
     code_pegs = code_breaker.code_pegs
-    if is_correct?(index,code_breaker) == false
+    if is_correct?(pattern, index, code_breaker) == false
       if code_pegs.include?(pattern[index])
         return true
+      else
+        return false
       end
     end
-    return false
+
   end
 end
 
-class CodeBreaker
-  attr_accessor :code_pegs
+module CodeBreaker
+  def guess_code(pegs, code_pegs)
+    pegs = pegs.split(' ')
+    pegs.each do |peg| 
+      code_pegs.push(peg)
+    end
+  end
+end
+class Player
+  include CodeBreaker
+  include CodeMaker
+  attr_accessor :pattern, :feedback, :code_pegs
   def initialize
+    @pattern = []
+    @feedback = []
     @code_pegs = []
   end
 
-  def guess_code
-    puts 'Give 4 color sand separate it with space.(Choices: blue, green, yellow, brown and violet)'
-    codes = gets.chomp.split(' ')
-    codes.each do |color| 
-      @code_pegs.push(color)
-    end
-  end
 end
-
-class Computer < CodeBreaker
-
-  attr_accessor :code_maker
+class Computer
+  include CodeBreaker
+  include CodeMaker
+  attr_accessor :pattern, :feedback, :code_pegs
   def initialize
-    super()
+    @pattern = []
+    @feedback = []
+    @code_pegs = []
   end
 
-  def give_random_pegs
-    colors = ['yellow', 'brown', 'violet', 'green', 'blue']
-    index = Random.rand(4)
-    @code_pegs.push(colors[index])
-  end
 end
+
+
 class DecodingBoard
   attr_accessor :code_maker, :code_breaker
 
@@ -145,11 +149,11 @@ class MasterMind
     puts 'Choices: blue green yellow brown violet'
     pattern = gets.chomp.split(' ')
     @code_maker.pattern = pattern
-
     12.times do |attempt|
+      @decoding_board.draw
+      command = computer.guess_code
       puts "attempt: #{attempt}"
       @decoding_board.draw
-      command = code_breaker.guess_code
     end
   end
   def play_as_code_breaker
