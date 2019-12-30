@@ -54,7 +54,7 @@ class Computer
       if present?(code_pegs,index)
         if correct_in_position?(index, peg)
           feedback.push('B')
-        else
+        elsif wrong_position?
           feedback.push('W')
         end
       end
@@ -68,10 +68,8 @@ class Computer
   end
 
   private
-  def wrong_position?
-  end
+
   def present?(code_pegs,index)
-    pattern_colors = colors(pattern)
     code_colors = colors(code_pegs)
     return true if code_colors.include?(pattern[index].color)
   end
@@ -83,13 +81,21 @@ class Computer
     end
     colors
   end
+
   def correct_in_position?(index, code_peg)
     return true if code_peg.color == pattern[index].color
   end
 
+  def wrong_position?(index)
+    code_colors = colors(code_pegs)
+    pattern_color = colors(pattern)
+    return true if pattern_color[index] == code_colors[index]
+    end
+  end
+
   def random_peg
     colors = ['red', 'blue', 'yellow', 'green', 'violet']
-    index = Random.rand(4)
+    index = Random.rand(5)
     Peg.new(colors[index])
   end
 
