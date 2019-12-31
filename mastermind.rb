@@ -149,8 +149,8 @@ class DecodingBoard
     new_array = []
     array.each do |a|
       new_array.push(a) if a != ' '
+    end
     new_array
-  end
   end
 end
 class Mastermind
