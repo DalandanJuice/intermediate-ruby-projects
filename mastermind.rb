@@ -24,12 +24,27 @@ class Player
     guess.each do |color|
       code_pegs.push(Peg.new(color.downcase))
     end
-  end
+    end
 
-  def give_feedback
+  def give_feedback(computer)
+
     puts 'Give your feedback and separate it with spaces.'
     puts 'Choices are B and W'
-    feedback = gets.chomp.split(' ')
+
+    self.feedback = gets.chomp.split(' ')
+    if feedback_correct?
+      return true
+    else
+      give_feedback(computer)
+    end
+
+  end
+
+  private
+  def feedback_correct?
+    feedback_checker = Computer.new
+    feedback_checker.give_feedback(computer.code_pegs)
+    return true if feedback_Checker.feedback == feedback
   end
 
 end
@@ -54,11 +69,14 @@ class Computer
       if present?(code_pegs,index)
         if correct_in_position?(index, peg)
           feedback.push('B')
-        elsif wrong_position?
+        elsif wrong_position?(index)
           feedback.push('W')
         end
+      else
+        feedback.push(' ')
       end
     end
+
   end
 
   def guess_code
@@ -90,7 +108,6 @@ class Computer
     code_colors = colors(code_pegs)
     pattern_color = colors(pattern)
     return true if pattern_color[index] == code_colors[index]
-    end
   end
 
   def random_peg
@@ -98,9 +115,7 @@ class Computer
     index = Random.rand(5)
     Peg.new(colors[index])
   end
-
 end
-
 class DecodingBoard
   attr_accessor :code_maker, :code_breaker
 
@@ -123,13 +138,21 @@ class DecodingBoard
     end
   end
 
-
   def draw_feedback
-    feedback = self.code_maker.feedback
+    feedback = remove_blanks(self.code_maker.feedback)
     print(' (')
     feedback = feedback.join(',')
     print(feedback)
     print ')'
+  end
+  def remove_blanks(array)
+    new_array = []
+    array.each do |a|
+      if a != ' '
+        new_array.push(a)
+      end
+    end
+    new_array
   end
 end
 class Mastermind
