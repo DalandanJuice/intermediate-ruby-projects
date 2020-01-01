@@ -17,7 +17,6 @@ class Player
     @feedback = []
     @code_pegs = []
   end
-
   def guess_code(computer)
     guess = ''
     puts 'Choices: blue, red, yellow, green, violet'
@@ -73,8 +72,8 @@ class Computer
   def give_feedback(player)
     code_pegs = player.code_pegs
     code_pegs.each_with_index do |peg, index|
-      if present?(code_pegs, index)
-        push_feedback(index, peg)
+      if present?(peg)
+        push_feedback(index, code_pegs)
       else
         feedback.push(' ')
       end
@@ -87,19 +86,19 @@ class Computer
     end
   end
 
-  private
-
-  def push_feedback(index, peg)
-    if correct_in_position?(index, peg)
+  def push_feedback(index, code_pegs)
+    if correct_position?(index, code_pegs[index])
+      puts 'pushing Black!'
       feedback.push('B')
-    elsif wrong_position?(index)
+    elsif wrong_position?(index, code_pegs)
+      puts 'pushing White!'
       feedback.push('W')
-    end
+    end 
   end
 
-  def present?(code_pegs, index)
-    code_colors = colors(code_pegs)
-    return true if code_colors.include?(pattern[index].color)
+  def present?(peg)
+    pattern_colors = colors(pattern)
+    return true if pattern_colors.include?(peg.color)
   end
 
   def colors(pegs)
@@ -110,14 +109,14 @@ class Computer
     colors
   end
 
-  def correct_in_position?(index, code_peg)
+  def correct_position?(index, code_peg)
     return true if code_peg.color == pattern[index].color
   end
 
-  def wrong_position?(index)
-    code_colors = colors(code_pegs)
-    pattern_color = colors(pattern)
-    return true if pattern_color[index] == code_colors[index]
+  def wrong_position?(index, code_pegss)
+    code_colors = colors(code_pegss)
+    pattern_color = colors(@pattern)
+    return true if code_colors.include?(pattern_color[index])
   end
 
   def random_peg
@@ -135,7 +134,8 @@ class DecodingBoard
     @code_breaker = code_breaker
   end
 
-  def draw
+  def draw(attempt)
+    puts "Attempt: #{attempt + 1}"
     draw_code
     draw_feedback
   end
@@ -173,9 +173,10 @@ class Mastermind
     @computer = Computer.new
     @decoding_board = ''
   end
+
   def start
     answer = ''
-    while answer.downcase != 'codemaker' or answer.downcase != 'codebreaker'
+    while answer.downcase != 'codemaker' || answer.downcase != 'codebreaker'
       puts 'Do you want to be the code maker or the code_breaker?'
       puts 'codemaker or codebreaker?r'
       answer = gets.chomp
@@ -183,7 +184,7 @@ class Mastermind
         play_as_code_maker
         break
       elsif answer.downcase == 'codebreaker'
-
+        self.decoding_board = DecodingBoard.new(computer, player)
         play_as_code_breaker
         break
       end
@@ -196,10 +197,11 @@ class Mastermind
   private
 
   def play_as_code_maker
-    decoding_board = DecodingBoard.new(computer,player)
+    decoding_board = DecodingBoard.new(computer, player)
     puts 'The game has started'
     puts 'You will play as the code maker and the computer as code breaker'
-    puts 'Input 4 colors and separate it with space. This will be the pattern that the computer will guess'
+    puts 'Input 4 colors and separate it with space.'
+    puts 'This will be the pattern the computer will guess'
     pattern = gets.chomp
     player.pattern = pattern
     puts 'If you\re giving feedback'
@@ -214,8 +216,7 @@ class Mastermind
       computer.guess_code
       puts computer.code_pegs
       player.give_feedback
-      puts "Attempt: #{attempt + 1}"
-      decoding_board.draw
+      decoding_board.draw(attempt)
       break if correct_pegs(computer.feedback) == 4
 
       player.code_pegs.clear
@@ -224,19 +225,18 @@ class Mastermind
   end
 
   def play_as_code_breaker
-    decoding_board = DecodingBoard.new(computer, player)
-    show_introduction
-    @computer.make_random_pattern
+    show_code_breaker_introduction
+    computer.make_random_pattern
+    show_answer(computer.pattern)
     12.times do |attempt|
       guess_answer
-      puts "Attempt: #{attempt + 1}"
-      decoding_board.draw
+      decoding_board.draw(attempt)
       break if correct_pegs(computer.feedback) == 4
       return true if game_over?(attempt)
 
       clear_all
     end
-    show_answer
+    show_answer(computer.pattern)
   end
 
   def game_over?(attempt)
@@ -248,18 +248,22 @@ class Mastermind
     puts "The answer is #{answer}"
     true
   end
+
   def guess_answer
     player.guess_code(computer)
     return false if player.code_pegs[0].color == 'exit'
 
     computer.give_feedback(player)
   end
-  def show_introduction()
+
+  def show_code_breaker_introduction
     puts 'The game has started'
     puts 'You will play as the code breaker and the computer as code maker'
     puts 'Input 4 colors and separate it with spaces'
     puts 'type "exit" if you want to stop the game'
+    puts "Pattern: #{computer.pattern}"
   end
+
   def correct_pegs(feedback)
     correct_count = 0
     feedback.each do |peg|
@@ -267,11 +271,13 @@ class Mastermind
     end
     correct_count
   end
-  def show_answer
+
+  def show_answer(answer)
     puts 'You did it! You guessed the right pegs'
-    answer = get_colors(computer.pattern).join(', ')
+    answer = get_colors(answer).join(', ')
     puts "The answer is #{answer}"
   end
+
   def get_colors(pegs)
     colors = []
     pegs.each do |peg|
