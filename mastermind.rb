@@ -1,4 +1,6 @@
-#Peg is the object that will be used for
+# frozen_string_literal:true
+
+# Peg is the object that contains the color # frozen_string_literal:true
 class Peg
   attr_accessor :color
   def initialize(color)
@@ -9,16 +11,15 @@ class Peg
     color.to_s
   end
 end
+# Corrector checks if player's moves if it's correct or not
 module Corrector
-
-
   def self.turn_x_into_blank(feedbacks)
-    new_feedback = Hash.new
-    feedbacks.each do |number,peg|
+    new_feedback = []
+    feedbacks.each_with_index do |peg, index|
       if peg.downcase == 'x'
-        new_feedback[number] = ''
+        new_feedback[index] = ''
       else
-        new_feedback[number] = peg
+        new_feedback[index] = peg
       end
     end
     new_feedback
@@ -33,17 +34,15 @@ module Corrector
     return true if included_count == 4
   end
 
-
-  def self.feedback_correct?(pattern,feedback,computer)
+  def self.feedback_correct?(pattern, feedback, computer)
     feedback_checker = Computer.new
     feedback_checker.pattern = pattern
     feedback_checker.give_feedback(computer)
+    puts feedback_checker.feedback.to_s
     new_feedback = Corrector.turn_x_into_blank(feedback)
     puts 'Tada!' if feedback_checker.feedback == new_feedback
     return true if feedback_checker.feedback == new_feedback
   end
-
-
 end
 # Player class is the class that you will be controlling.
 class Player
@@ -78,21 +77,19 @@ class Player
   end
 
   def give_feedback(computer)
-    feedback_checker = Computer.new
-    feedback_checker.pattern = pattern
-    feedback_checker.give_feedback(computer)
-    puts "Pattern: #{feedback_checker.pattern}"
-    puts "Feedback: #{feedback_checker.feedback}"
     puts 'Give your feedback and separate it with comma.'
     puts 'Put X if blank'
     puts 'Choices are B and W'
     puts 'Put it all in exact position'
-    self.feedback = gets.chomp.split(',')
-    return true if Corrector.feedback_correct?(pattern,feedback,computer)
-
-    give_feedback(computer)
+    my_feedback = Corrector.turn_x_into_blank(gets.chomp.split(','))
+    if Corrector.feedback_correct?(pattern, my_feedback, computer)
+      @feedback = my_feedback
+      return true
+    else
+      puts "Repeat"
+      give_feedback(computer)
+    end
   end
-
 
   private
 
@@ -101,8 +98,6 @@ class Player
       code_pegs.push(Peg.new(color.downcase))
     end
   end
-
-
 end
 # Computer class is a computer that fights with the player
 class Computer
@@ -111,7 +106,7 @@ class Computer
   def initialize
     @pattern = []
     @code_pegs = []
-    @feedback = Hash.new
+    @feedback = [1, 2, 3, 4]
     @code_breaker_pegs = []
   end
 
@@ -125,10 +120,11 @@ class Computer
     correct_position_feedback(player)
     wrong_position_feedback(player)
     not_present_feedback(player)
+    code_breaker_pegs.clear
   end
 
   def reset_feedback
-    feedback[0] = 'X'
+   f feedback[0] = 'X'
     feedback[1] = 'X'
     feedback[2] = 'X'
     feedback[3] = 'X'
@@ -142,51 +138,37 @@ class Computer
 
   def correct_position_feedback(player)
     player_pegs = player.code_pegs
-    player_pegs.each_with_index do |peg,index|
-      if correct_position?(index,peg)
-        puts 'Blacking!'
-        code_breaker_pegs.push(peg)
-        feedback[index] = 'B'
-      end
+    player_pegs.each_with_index do |peg, index|
+      next if correct_position?(index, peg) == false
+
+      puts 'Blacking!'
+      code_breaker_pegs.push(peg)
+      feedback[index] = 'B'
     end
   end
+
   def wrong_position_feedback(player)
     player_pegs = player.code_pegs
-    player_pegs.each_with_index do |peg,index|
-      if correct_position?(index, peg) == nil
-        if wrong_position?(index,player_pegs)
-          code_breaker_pegs.push(peg)
-          feedback[index] = 'W'
-        else
-          feedback[index] = ''
-        end
+    player_pegs.each_with_index do |peg, index|
+      next unless correct_position?(index, peg) == false
+
+      if wrong_position?(index, player_pegs)
+        code_breaker_pegs.push(peg)
+        feedback[index] = 'W'
+      else
+        feedback[index] = ''
       end
     end
-
-    end
-
+  end
   def not_present_feedback(player)
     player_pegs = player.code_pegs
-    player_pegs.each_with_index do |peg,index|
-       if present?(peg) == false
+    player_pegs.each_with_index do |peg, index|
+      if present?(peg) == false
+        puts 'Not Present Blank!'
         code_breaker_pegs.push(peg)
         feedback[index] = ''
-        end
+      end
     end
-  end
-
-  def push_feedback(index, code_pegs)
-    if correct_position?(index, code_pegs[index])
-      puts 'pushing Black!'
-      feedback.push('B')
-    elsif wrong_position?(index, code_pegs)
-      puts 'pushing White!'
-      feedback.push('W')
-    end
-  end
-  def present?(peg)
-    pattern_colors = colors(pattern)
-    return true if pattern_colors.include?(peg.color)
   end
 
   def colors(pegs)
@@ -198,23 +180,31 @@ class Computer
   end
 
   def correct_position?(index, code_peg)
-    return true if code_peg.color == pattern[index].color
+    code_peg.color == pattern[index].color
+  end
+
+  def present?(peg)
+    pattern_colors = colors(pattern)
+    return true if pattern_colors.include?(peg.color)
   end
 
   def wrong_position?(index, pegs)
     code_colors = colors(pegs)
     pattern_color = colors(pattern)
-    pattern_color_count = color_count(pattern, pegs[index].color)
-    code_peg_color_count = color_count(code_breaker_pegs,pegs[index].color)
-    return true if pattern_color.include?(code_colors[index]) and code_peg_color_count < pattern_color_count
+    return unless pattern_color.include?(code_colors[index])
+    return true if color_is_less_than?(pegs[index].color)
   end
 
-  def color_count(pegs,color)
+  def color_is_less_than?(color)
+    pattern_color_count = color_count(pattern, color)
+    code_peg_color_count = color_count(code_breaker_pegs, color)
+    code_peg_color_count < pattern_color_count
+  end
+
+  def color_count(pegs, color)
     color_count = 0
     pegs.each do |peg|
-      if peg.color == color
-       color_count += 1
-      end
+      color_count += 1 if peg.color == color
     end
     color_count
   end
@@ -223,11 +213,11 @@ class Computer
     colors = %w[red blue yellow green violet]
     index = Random.rand(5)
     Peg.new(colors[index])
-    end
+  end
 end
 # Decoding Board class is the visual for the game
 class DecodingBoard
-  attr_accessor :code_makeir, :code_breaker
+  attr_accessor :code_maker, :code_breaker
 
   def initialize(code_maker, code_breaker)
     @code_maker = code_maker
@@ -251,8 +241,8 @@ class DecodingBoard
   end
 
   def draw_feedback
-    feedbacks = remove_blanks(code_maker.feedback.values).join(',')
-    print("(#{feedbacks})")
+    feedback = code_maker.feedback
+    print(feedback.to_s)
   end
 
   def remove_blanks(array)
@@ -263,6 +253,7 @@ class DecodingBoard
     new_array
   end
 end
+# Text For the Game
 class Mastermind
   attr_accessor :player, :computer, :decoding_board
   def initialize
@@ -278,6 +269,7 @@ class Mastermind
       puts 'codemaker or codebreaker?r'
       answer = gets.chomp
       if answer.downcase == 'codemaker'
+        self.decoding_board = DecodingBoard.new(player, computer)
         play_as_code_maker
         break
       elsif answer.downcase == 'codebreaker'
@@ -294,40 +286,26 @@ class Mastermind
   private
 
   def play_as_code_maker
-    decoding_board = DecodingBoard.new(computer, player)
     puts 'The game has started'
-    puts 'You will play as the code maker and the computer as code breaker'
+    show_code_maker_instructions
     player.make_pattern
-    puts 'If you\re giving feedback'
-    puts 'Separate your Feedback with space.'
-    puts 'Choices are B and W'
-    puts 'B means Black, if the peg is the correct color and the same position'
-    puts 'W maean White, if the peg is the correct color but wrong in position'
-    puts 'Don"t put a peg if the color doesn\'t exist in the pattern'
     12.times do |attempt|
-      puts 'Choices: blue, red, yellow, green, violet'
-      computer.guess_code
-      puts computer.code_pegs
-      player.give_feedback(computer)
+      computer_guess_answer
       decoding_board.draw(attempt)
       break if correct_pegs(computer.feedback) == 4
 
-      player.feedback.clear
-      computer.code_pegs.clear
+      clear_all
     end
   end
 
   def play_as_code_breaker
     show_code_breaker_introduction
     computer.make_random_pattern
-    show_answer(computer)
     12.times do |attempt|
-      guess_answer
+      player_guess_answer
       decoding_board.draw(attempt)
       break if correct_pegs(computer.feedback) == 4
       return true if game_over?(attempt)
-
-      clear_all
     end
     show_answer(computer)
   end
@@ -342,11 +320,28 @@ class Mastermind
     true
   end
 
-  def guess_answer
+  def player_guess_answer
     player.guess_code(computer)
     return false if player.code_pegs[0].color.downcase == 'exit'
 
     computer.give_feedback(player)
+  end
+
+  def computer_guess_answer
+    computer.guess_code
+    puts computer.code_pegs
+    player.give_feedback(computer)
+  end
+
+  def show_code_maker_instructions
+    puts 'You will play as the code maker and the computer as code breaker'
+
+    puts 'If you\re giving feedback'
+    puts 'Separate your Feedback with space.'
+    puts 'Choices are B and W'
+    puts 'B means Black, if the peg is the correct color and the same position'
+    puts 'W maean White, if the peg is the correct color but wrong in position'
+    puts 'Don"t put a peg if the color doesn\'t exist in the pattern'
   end
 
   def show_code_breaker_introduction
@@ -358,7 +353,7 @@ class Mastermind
 
   def correct_pegs(feedback)
     correct_count = 0
-    feedback.each do |number,peg|
+    feedback.each do |peg|
       correct_count += 1 if peg == 'B'
     end
     correct_count
