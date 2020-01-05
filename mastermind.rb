@@ -149,6 +149,8 @@ class Computer
       peg = random_peg
       if  player.feedback[index] == 'B'  and code_pegs.length == 4
         code_pegs[index] = code_pegs[index]
+      elsif player.feedback[index] == 'W' and code_pegs.length == 4
+        occupy_position(player,code_pegs[index].color,index)
       else
         code_pegs[index] = random_peg
       end
@@ -161,6 +163,20 @@ class Computer
     else
       return false
     end
+  end
+
+  def occupy_position(player,color,computer_index)
+    index = 0
+    while player.feedback[index] == 'B'
+      if player.feedback[index] == 'W'
+        switch_index = computer_index
+        code_pegs[computer_index] = code_pegs[index]
+        code_pegs[index] = code_pegs[switch_index]
+       return
+      end
+      index = Random.rand(4)
+    end
+    code_pegs[index] = Peg.new(color)
   end
 
   def correct_position_feedback(player)
@@ -318,7 +334,7 @@ class Mastermind
     12.times do |attempt|
       computer_guess_answer
       decoding_board.draw(attempt)
-      break if correct_pegs(computer.feedback) == 4
+      break if correct_pegs(player.feedback) == 4
 
     end
   end
