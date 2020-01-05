@@ -143,11 +143,24 @@ class Computer
     feedback[3] = 'X'
   end
 
-  def guess_code(pattern)
-    4.times do
+  def guess_code(player)
+    new_code_peg = []
+    4.times do |index|
+      peg = random_peg
+      if  player.feedback[index] == 'B'  and code_pegs.length == 4
+        code_pegs[index] = code_pegs[index]
+      else
+        code_pegs[index] = random_peg
+      end
+    end
+  end
 
-      code_pegs.push(random_peg)
-
+  def color_in_correct_position?(player,index)
+    if code_pegs[index].color == player.pattern[index].color
+      return true
+    else
+      return false
+    end
   end
 
   def correct_position_feedback(player)
@@ -340,7 +353,7 @@ class Mastermind
   end
 
   def computer_guess_answer
-    computer.guess_code(player.pattern)
+    computer.guess_code(player)
     puts computer.code_pegs
     player.give_feedback(computer)
   end
