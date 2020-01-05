@@ -13,9 +13,22 @@ class Peg
 end
 # Corrector checks if player's moves if it's correct or not
 module Corrector
-  def self.turn_x_into_blank(feedbacks)
+  def self.Colors_in_pattern?(pattern)
+    color = %w[blue green red yellow violet]
+    color_in_pattern_count = 0
+    pattern.each do |peg|
+      color_in_pattern_count += 1 if color.include?(peg.color)
+    end
+    if color_in_pattern_count == 4
+      return true
+    else
+      return false
+    end
+  end
+
+  def self.turn_x_into_blank(feedback)
     new_feedback = []
-    feedbacks.each_with_index do |peg, index|
+    feedback.each_with_index do |peg, index|
       if peg.downcase == 'x'
         new_feedback[index] = ''
       else
@@ -106,7 +119,7 @@ class Computer
   def initialize
     @pattern = []
     @code_pegs = []
-    @feedback = [1, 2, 3, 4]
+    @feedback = []
     @code_breaker_pegs = []
   end
 
@@ -124,23 +137,23 @@ class Computer
   end
 
   def reset_feedback
-   f feedback[0] = 'X'
+    feedback[0] = 'X'
     feedback[1] = 'X'
     feedback[2] = 'X'
     feedback[3] = 'X'
   end
 
-  def guess_code
+  def guess_code(pattern)
     4.times do
+
       code_pegs.push(random_peg)
-    end
+
   end
 
   def correct_position_feedback(player)
     player_pegs = player.code_pegs
     player_pegs.each_with_index do |peg, index|
       next if correct_position?(index, peg) == false
-
       puts 'Blacking!'
       code_breaker_pegs.push(peg)
       feedback[index] = 'B'
@@ -294,7 +307,6 @@ class Mastermind
       decoding_board.draw(attempt)
       break if correct_pegs(computer.feedback) == 4
 
-      clear_all
     end
   end
 
@@ -328,7 +340,7 @@ class Mastermind
   end
 
   def computer_guess_answer
-    computer.guess_code
+    computer.guess_code(player.pattern)
     puts computer.code_pegs
     player.give_feedback(computer)
   end
@@ -341,7 +353,7 @@ class Mastermind
     puts 'Choices are B and W'
     puts 'B means Black, if the peg is the correct color and the same position'
     puts 'W maean White, if the peg is the correct color but wrong in position'
-    puts 'Don"t put a peg if the color doesn\'t exist in the pattern'
+    puts 'X mean Blank,  if the peg does\'t exist in the pattern'
   end
 
   def show_code_breaker_introduction
@@ -373,10 +385,7 @@ class Mastermind
     colors
   end
 
-  def clear_all
-    player.code_pegs.clear
-    computer.reset_feedback
-  end
+
 end
 mastermind = Mastermind.new
 mastermind.start
