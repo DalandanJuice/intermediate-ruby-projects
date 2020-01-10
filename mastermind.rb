@@ -135,7 +135,6 @@ class Computer
     not_present_feedback(player)
     code_breaker_pegs.clear
   end
-
   def reset_feedback
     feedback[0] = 'X'
     feedback[1] = 'X'
@@ -144,16 +143,24 @@ class Computer
   end
 
   def guess_code(player)
-    new_code_peg = []
     4.times do |index|
       peg = random_peg
-      if  player.feedback[index] == 'B'  and code_pegs.length == 4
-        code_pegs[index] = code_pegs[index]
-      elsif player.feedback[index] == 'W' and code_pegs.length == 4
-        occupy_position(player,code_pegs[index].color,index)
+      if code_pegs.length == 4
+        if  player.feedback[index] == 'B' 
+          puts "Correct Position in index: #{index}"
+          next
+        elsif player.feedback[index] == 'W'
+          puts "Wrong Position  in index: #{index}"
+          occupy_position(player, index)
+        elsif player.feedback[index] == ""
+          puts "Peg Doesnt exist in index: #{index}"
+          code_pegs[index] = random_peg
+          player.feedback[index] == nil
+        end
       else
         code_pegs[index] = random_peg
       end
+
     end
   end
 
@@ -163,27 +170,38 @@ class Computer
     else
       return false
     end
-  end
-
-  def occupy_position(player,color,computer_index)
-    index = 0
-    while player.feedback[index] == 'B'
-      if player.feedback[index] == 'W'
-        switch_index = computer_index
-        code_pegs[computer_index] = code_pegs[index]
-        code_pegs[index] = code_pegs[switch_index]
-       return
-      end
-      index = Random.rand(4)
     end
-    code_pegs[index] = Peg.new(color)
+
+  def occupy_position(player, computer_index)
+    index = 0
+    code_pegs.each_with_index do |code_peg,index|
+      if player.feedback[index] == 'W' && computer_index < index
+        puts 'Switch!'
+        switch_value = code_pegs[computer_index]
+        code_pegs[computer_index] = code_pegs[index]
+        code_pegs[index] = switch_value
+        break
+      elsif player.feedback[index] == ""
+        puts "Blank!"
+        switch_value = code_pegs[computer_index]
+        code_pegs[computer_index] = random_peg
+        code_pegs[index] = switch_value
+        player.feedback[index] = nil
+        player.feedback[computer_index] = ""
+        puts "#{switch_value.color} is now in #{index}"
+        break
+      end
+    end
+  end
+#adjust peg based on feedback
+  def adjust_peg(player)
+
   end
 
   def correct_position_feedback(player)
     player_pegs = player.code_pegs
     player_pegs.each_with_index do |peg, index|
       next if correct_position?(index, peg) == false
-      puts 'Blacking!'
       code_breaker_pegs.push(peg)
       feedback[index] = 'B'
     end
@@ -335,8 +353,8 @@ class Mastermind
       computer_guess_answer
       decoding_board.draw(attempt)
       break if correct_pegs(player.feedback) == 4
-
     end
+    clear_all(player,computer)
   end
 
   def play_as_code_breaker
@@ -414,6 +432,12 @@ class Mastermind
     colors
   end
 
+  def clear_all(code_maker,code_breaker)
+    puts "Cleared"
+    code_maker.pattern.clear
+    code_maker.feedback.clear
+    code_breaker.code_pegs.clear
+  end
 
 end
 mastermind = Mastermind.new
