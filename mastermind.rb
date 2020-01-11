@@ -341,6 +341,7 @@ class Mastermind
         break
       end
     end
+    puts ''
     puts 'Do you want to play a game again?(yes or no)'
     answer = gets.chomp
     start if answer.downcase == 'yes'
