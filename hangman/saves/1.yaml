@@ -1,0 +1,23 @@
+--- &1 !ruby/object:Hangman
+letter_attempts:
+- a
+- e
+- i
+- o
+- u
+- g
+- h
+- b
+- n
+- m
+- p
+remaining_guess: 5
+board: !ruby/object:Board
+  hangman: *1
+save_file_manager: !ruby/object:SaveFileManager
+  hangman: *1
+dictionary: 5desk.txt
+player: !ruby/object:Player
+  word: P o _ _ p h e m u _
+computer: !ruby/object:Computer
+  word: Polyphemus
