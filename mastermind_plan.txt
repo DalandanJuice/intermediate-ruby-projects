@@ -1,0 +1,52 @@
+Code Pegs - 
+GR - Green
+YL - Yellow
+BL - Blue
+VI - Violet
+BR - Brown
+
+Key pegs - Black and White
+
+Classes:
+Pegs - The pieces in the game
+Instance variable:  color
+
+CodeMaker - Computer who randomly selects color
+  instance variables:
+    code - (Array)
+  Methods:
+    select_random_pegs - Selects 5 Random Pegs and change the instance code
+    
+
+CodeBreaker - This is the player who breaks the code
+   instance variables:f\
+   code - (empty array)
+  methods:
+  guess_code() - Gives 4 colors and separated by one space. Also it's in order. It changes the instance code
+   
+  
+DecodingBoard - The visual for the game
+instance variables:
+code_maker (CodeMaker class)
+code_breaker (codeBreaker Class)
+methods:
+draw - guess --> |BLUE |GREEN | VIOLET | BROWN | (B, W, B, W)  <--feedback
+
+
+Mastermind - Rules of the game
+  instance variables:
+    code_maker (CodeMaker class)
+    code_breaker (CodeBreaker Class)
+    decoding_board (DecodingBoard class)
+  methods:
+    start - Starts the game
+  private methods:
+    is_correct? - Gives 1 peg that is white (Correct in both color and position)
+    is_wrong? - Gives 1 peg that is black (correct in color but wrong in position)
+    is_not_present? - Doesnt give any pegs
+
+    
+
+
+
+
